@@ -1,0 +1,1 @@
+curl.exe -s -X GET http://172.16.42.1:1471/api/pineap/ssids -H "Content-Type: application/json" -H "Authorization: Bearer REPLACE"

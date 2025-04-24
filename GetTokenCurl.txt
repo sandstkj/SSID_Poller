@@ -1,0 +1,1 @@
+curl.exe -s -X POST http://172.16.42.1:1471/api/login -H "Content-Type: application/json" -d "{\"username\":\"root\",\"password\":\"REPLACE\"}"
