@@ -7,10 +7,20 @@ import time
 import random
 import os
 import vlc
+import re
 
-global auth_key, text_list, SSID_count
+global auth_key, text_list, SSID_count, bad_words
 lock = threading.Lock()
 data_list = ['']
+
+
+
+def censor_word(word):
+    global bad_words
+    print(word)
+    pat = re.compile("|".join(re.escape(w) for w in bad_words), flags=re.I)
+    temp = pat.sub(lambda g: "*" * len(g.group(0)), word)
+    return temp
 
 def authenticate():
     global auth_key
@@ -25,6 +35,21 @@ def authenticate():
     auth_key = response_json.get('token')
     print('Your auth token is: ' + auth_key)
 
+def clean_list(list):
+    new_list = []
+    for item in list:
+        check = 1
+        for bad_word in bad_words:
+            if bad_word in item:
+                temp = censor_word(item)
+                check = 0
+                new_list.append(temp)
+                break
+        if check == 1:
+            new_list.append(item)
+    return new_list
+
+
 
 def get_SSIDs():
     global auth_key, text_list, SSID_count
@@ -37,12 +62,15 @@ def get_SSIDs():
     response_json = json.loads(result.stdout)
     print('--List Updating--')
     # print(response_json)
-    text_list = response_json['ssids'].strip().split('\n')
+    unclean_text_list = response_json['ssids'].strip().split('\n')
+
+    clean_text_list = clean_list(unclean_text_list)
+    # print('Clean list: ' + str(clean_text_list))
+    text_list = clean_text_list
     if len(text_list) > SSID_count:
         player = vlc.MediaPlayer("tuturu_1.mp3")
         player.play()
     SSID_count = len(text_list)
-    return response_json
 
 def update_data():
     global text_list
@@ -57,10 +85,15 @@ def update_data():
 
 
 if __name__ == '__main__':
-    global text_list, SSID_count
+    global text_list, SSID_count, bad_words
     SSID_count = 0
     text_list = []
     authenticate()
+
+    with open('BadWords.txt', 'r') as file:
+        bad_words = file.read()
+    bad_words = bad_words.strip().split('\n')
+
     # GUI setup
     root = tk.Tk()
     root.title("SSIDs")
