@@ -6,10 +6,11 @@ from tkinter import font
 import time
 import random
 import os
+import vlc
 
-global auth_key, text_list
+global auth_key, text_list, SSID_count
 lock = threading.Lock()
-data_list = ["Initial Item"]
+data_list = ['']
 
 def authenticate():
     global auth_key
@@ -23,11 +24,10 @@ def authenticate():
     print(response_json)
     auth_key = response_json.get('token')
     print('Your auth token is: ' + auth_key)
-    print(123)
 
 
 def get_SSIDs():
-    global auth_key, text_list
+    global auth_key, text_list, SSID_count
 
     with open('GetSSIDs.txt', 'r') as file:
         curl_command = file.read()
@@ -35,9 +35,13 @@ def get_SSIDs():
     result = subprocess.run(curl_command, shell=True, capture_output=True, text=True)
     # print(result)
     response_json = json.loads(result.stdout)
-    print('----------------')
+    print('--List Updating--')
     # print(response_json)
     text_list = response_json['ssids'].strip().split('\n')
+    if len(text_list) > SSID_count:
+        player = vlc.MediaPlayer("tuturu_1.mp3")
+        player.play()
+    SSID_count = len(text_list)
     return response_json
 
 def update_data():
@@ -45,28 +49,26 @@ def update_data():
     get_SSIDs()
     new_item = f"Item {random.randint(100, 999)}"
     data_list.append(new_item)
-    # data_list.append('1')
     listbox.delete(0, tk.END)
     for item in text_list:
         listbox.insert(tk.END, item, )
     listbox.yview_moveto(1.0)
-    root.after(5000, update_data)
+    root.after(200, update_data)
 
 
 if __name__ == '__main__':
-    print('wahh')
-    global text_list
+    global text_list, SSID_count
+    SSID_count = 0
     text_list = []
     authenticate()
-    print(321)
     # GUI setup
     root = tk.Tk()
-    root.title("Dynamic List Update")
+    root.title("SSIDs")
 
     root.geometry("600x400")  # optional: set initial size
 
     # Custom font
-    big_font = font.Font(family="Helvetica", size=16)
+    big_font = font.Font(family="Helvetica", size=30)
 
     # Grid layout
     root.rowconfigure(0, weight=1)
